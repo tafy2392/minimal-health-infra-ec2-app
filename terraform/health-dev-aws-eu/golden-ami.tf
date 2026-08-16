@@ -1,4 +1,6 @@
 module "golden_ami" {
+  depends_on = [module.vpc] 
+
   source      = "../modules/golden-ami"
   environment = var.environment
   aws_region  = var.region
