@@ -12,17 +12,17 @@ variable "image_id" {
 }
 
 variable "desired_capacity" {
-  type = number
+  type    = number
   default = 1
 }
 
 variable "max_size" {
-  type = number
+  type    = number
   default = 2
 }
 
 variable "min_size" {
-  type = number
+  type    = number
   default = 1
 }
 
@@ -39,4 +39,8 @@ variable "memory_scale_target_percent" {
 
 variable "subnet_ids" {
   type = list(string)
+}
+
+variable "vpc_id" {
+  type = string
 }

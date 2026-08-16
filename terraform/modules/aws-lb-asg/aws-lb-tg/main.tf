@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "ec2_assume_role" {
+data "aws_iam_policy_document" "app_assume_role" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
@@ -11,8 +11,8 @@ data "aws_iam_policy_document" "ec2_assume_role" {
 }
 
 resource "aws_iam_role" "app" {
-  name               = "${var.environment}-${var.name}-ec2"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
+  name               = "${var.environment}-${var.name}-app-role"
+  assume_role_policy = data.aws_iam_policy_document.app_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "app_ssm" {
@@ -46,6 +46,22 @@ resource "aws_autoscaling_group" "app" {
   max_size            = var.max_size
   min_size            = var.min_size
   vpc_zone_identifier = var.subnet_ids
+
+  target_group_arns = [aws_lb_target_group.app.arn]
+
+  launch_template {
+    id      = aws_launch_template.app.id
+    version = "$Latest"
+  }
+}
+
+resource "aws_lb_target_group" "app" {
+  name        = "${var.environment}-${var.name}-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "instance"
+
 }
 
 resource "aws_autoscaling_policy" "scale_on_memory" {
