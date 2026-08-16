@@ -1,0 +1,39 @@
+---
+- name: Deploy app to {{ environment }}
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Create app directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: ec2-user
+        group: ec2-user
+        mode: "0755"
+
+    - name: Copy docker-compose file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../docker-compose-{{ environment }}.yaml"
+        dest: "{{ app_dir }}/docker-compose.yaml"
+        owner: ec2-user
+        group: ec2-user
+        mode: "0644"
+
+    - name: Copy nginx vhost config
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../alb-healthz.conf"
+        dest: "{{ app_dir }}/alb-healthz.conf"
+        owner: ec2-user
+        group: ec2-user
+        mode: "0644"
+
+    - name: Pull latest images
+      community.docker.docker_compose_v2_pull:
+        project_src: "{{ app_dir }}"
+
+    - name: Start services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+        recreate: always
