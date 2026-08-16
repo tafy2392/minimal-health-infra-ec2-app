@@ -67,9 +67,19 @@ resource "aws_launch_template" "app" {
     associate_public_ip_address = true
     security_groups             = [aws_security_group.app.id]
   }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name        = "${var.environment}-${var.name}"
+      Environment = var.environment
+      AsgName     = "${var.environment}-${var.name}-asg"
+    }
+  }
 }
 
 resource "aws_autoscaling_group" "app" {
+  name                = "${var.environment}-${var.name}-asg"
   capacity_rebalance  = true
   desired_capacity    = var.desired_capacity
   max_size            = var.max_size
