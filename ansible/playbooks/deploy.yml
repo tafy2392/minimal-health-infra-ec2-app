@@ -1,5 +1,5 @@
 ---
-- name: Deploy app to {{ environment }}
+- name: Deploy app to {{ deploy_env }}
   hosts: all
   become: true
 
@@ -14,7 +14,7 @@
 
     - name: Copy docker-compose file
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../../docker-compose-{{ environment }}.yaml"
+        src: "{{ playbook_dir }}/../../docker-compose-{{ deploy_env }}.yaml"
         dest: "{{ app_dir }}/docker-compose.yaml"
         owner: ec2-user
         group: ec2-user

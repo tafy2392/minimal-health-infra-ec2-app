@@ -60,5 +60,5 @@ jobs:
         run: |
           ansible-playbook \
             -i inventory/${{ inputs.environment || 'dev' }} \
-            -e environment=${{ inputs.environment || 'dev' }} \
+            -e deploy_env=${{ inputs.environment || 'dev' }} \
             playbooks/deploy.yml
