@@ -3,7 +3,7 @@ locals {
   manifest_path  = "${path.module}/ami_manifest.json"
   manifest       = fileexists(local.manifest_path) ? jsondecode(file(local.manifest_path)) : null
   ami_id         = local.manifest != null ? split(":", local.manifest.builds[0].artifact_id)[1] : null
-  install_script = "${path.module}/scripts/${var.script_name}"
+  install_script = abspath("${path.module}/scripts/${var.script_name}")
 }
 
 data "aws_iam_policy_document" "packer_assume_role" {
