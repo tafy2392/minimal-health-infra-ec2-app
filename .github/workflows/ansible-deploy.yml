@@ -36,11 +36,6 @@ jobs:
           role-to-assume: ${{ vars.ANSIBLE_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Install Session manager plugin
-        uses: ankurk91/install-session-manager-plugin-action@v1
-        with:
-          cache: true
-
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
