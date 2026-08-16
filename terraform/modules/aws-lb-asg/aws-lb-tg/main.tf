@@ -79,10 +79,12 @@ resource "aws_launch_template" "app" {
   instance_type = var.instance_type
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
-    repo_url       = var.repo_url
-    github_ssh_key = var.github_ssh_key
-    deploy_env     = var.deploy_env
-    app_dir        = var.app_dir
+    repo_url         = var.repo_url
+    github_ssh_key   = var.github_ssh_key
+    deploy_env       = var.deploy_env
+    app_dir          = var.app_dir
+    app_secret       = var.app_secret
+    app_virtual_host = var.app_virtual_host
   }))
 
   iam_instance_profile {

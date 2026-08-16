@@ -50,6 +50,14 @@ log "Starting Docker Compose services..."
 
 cd "${app_dir}"
 
+log "Writing .env file..."
+install -m 600 -o ec2-user -g ec2-user /dev/null "${app_dir}/.env"
+cat > "${app_dir}/.env" << 'EOF_ENV'
+APP_SECRET=${app_secret}
+APP_VIRTUAL_HOST=${app_virtual_host}
+EOF_ENV
+chown ec2-user:ec2-user "${app_dir}/.env"
+
 sudo -u ec2-user docker compose \
   -f "docker-compose-${deploy_env}.yaml" \
   up -d

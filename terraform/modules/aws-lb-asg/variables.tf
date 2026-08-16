@@ -49,6 +49,17 @@ variable "alarm_email" {
   description = "Email address to receive CloudWatch alarm notifications"
 }
 
+variable "app_secret" {
+  type        = string
+  description = "APP_SECRET value for the application"
+  sensitive   = true
+}
+
+variable "app_virtual_host" {
+  type        = string
+  description = "Virtual host hostname for the application"
+}
+
 variable "tags" {
   type        = map(string)
   description = "Common tags applied to all resources"

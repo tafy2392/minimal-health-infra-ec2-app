@@ -8,9 +8,11 @@ tags = {
   CostCenter = "payments"
 }
 
-repo_url                 = "git@github.com:tafy2392/minimal-health-infra-ec2-app.git"
-github_ssh_key_ssm_param = "/dev/github/clone-token"
-alarm_email              = "tafymunya@gmail.com"
+repo_url                   = "git@github.com:tafy2392/minimal-health-infra-ec2-app.git"
+github_ssh_key_ssm_param   = "/dev/github/clone-token"
+app_secret_ssm_param       = "/dev/app/secret"
+app_virtual_host_ssm_param = "/dev/app/virtual-host"
+alarm_email                = "tafymunya@gmail.com"
 
 golden_amis = {
   "golden-ami-al2023-app" = {
