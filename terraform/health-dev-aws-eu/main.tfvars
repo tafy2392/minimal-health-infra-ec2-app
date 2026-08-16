@@ -30,7 +30,7 @@ github_oidc_roles = {
       "tafy2392@13062169/minimal-health-infra-ec2-app@1335242132:environment:dev",
     ]
     policies = [
-      "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+      "arn:aws:iam::aws:policy/AmazonSSMFullAccess",
       "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess",
     ]
   }
