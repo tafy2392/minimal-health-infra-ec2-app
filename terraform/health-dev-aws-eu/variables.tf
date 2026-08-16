@@ -24,3 +24,13 @@ variable "golden_amis" {
 variable "domain" {
   type = string
 }
+
+variable "github_oidc_roles" {
+  type = map(object({
+    role_description = string
+    repositories     = list(string)
+    policies         = list(string)
+  }))
+  description = "Map of role name -> OIDC role config. Each entry creates one IAM role."
+  default     = {}
+}
