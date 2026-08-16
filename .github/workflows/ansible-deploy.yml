@@ -125,10 +125,11 @@ jobs:
         working-directory: ansible
         env:
           APP_SECRET: ${{ secrets.APP_SECRET }}
+          APP_VIRTUAL_HOST: ${{ vars.APP_VIRTUAL_HOST }}
         run: |
+          EXTRA_VARS="-e deploy_env=${{ inputs.environment || 'dev' }} -e app_secret=${APP_SECRET} -e git_commit=${{ github.sha }}"
+          [ -n "${APP_VIRTUAL_HOST}" ] && EXTRA_VARS="${EXTRA_VARS} -e app_virtual_host=${APP_VIRTUAL_HOST}"
           ansible-playbook \
             -i inventory/${{ inputs.environment || 'dev' }} \
-            -e deploy_env=${{ inputs.environment || 'dev' }} \
-            -e app_secret="${APP_SECRET}" \
-            -e git_commit=${{ github.sha }} \
+            ${EXTRA_VARS} \
             playbooks/deploy.yml
