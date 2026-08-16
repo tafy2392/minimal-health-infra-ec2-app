@@ -1,0 +1,12 @@
+{
+  "name": "rewards",
+  "version": "1.0.0",
+  "description": "Minimal health/rewards service",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
