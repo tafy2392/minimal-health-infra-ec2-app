@@ -45,6 +45,42 @@ sudo systemctl enable docker
 log "Adding ec2-user to the docker group..."
 sudo usermod -aG docker ec2-user
 
+log "Installing CloudWatch agent..."
+sudo dnf install -y amazon-cloudwatch-agent
+
+log "Configuring CloudWatch agent for memory metrics..."
+sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json > /dev/null << 'EOF'
+{
+  "metrics": {
+    "namespace": "CWAgent",
+    "metrics_collected": {
+      "mem": {
+        "measurement": [
+          "mem_used_percent",
+          "mem_available_percent",
+          "mem_used",
+          "mem_total"
+        ],
+        "metrics_collection_interval": 60
+      },
+      "swap": {
+        "measurement": [
+          "swap_used_percent"
+        ],
+        "metrics_collection_interval": 60
+      }
+    },
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}",
+      "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+    }
+  }
+}
+EOF
+
+log "Enabling CloudWatch agent on boot..."
+sudo systemctl enable amazon-cloudwatch-agent
+
 log "Pointing python3/pip3 to 3.13..."
 sudo alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 1
 sudo alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.13 1

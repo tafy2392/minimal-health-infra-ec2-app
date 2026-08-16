@@ -42,3 +42,8 @@ variable "iam_instance_profile" {
   type        = string
   description = "IAM instance profile name to attach to the Packer build instance (needs SSM permissions)."
 }
+
+variable "install_script" {
+  type        = string
+  description = "Absolute path to the provisioner shell script."
+}

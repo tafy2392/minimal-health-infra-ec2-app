@@ -36,3 +36,9 @@ variable "subnet_id" {
   type        = string
   description = "Public subnet ID for the Packer build instance."
 }
+
+variable "script_name" {
+  type        = string
+  description = "Filename of the provisioner script inside modules/golden-ami/scripts/."
+  default     = "install.sh"
+}

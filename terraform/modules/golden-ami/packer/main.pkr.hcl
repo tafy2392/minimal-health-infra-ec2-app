@@ -59,7 +59,7 @@ build {
   sources = ["source.amazon-ebs.al2023"]
 
   provisioner "shell" {
-    script = "${path.root}/../scripts/install.sh"
+    script = var.install_script
     environment_vars = [
       "ENVIRONMENT=${var.environment}",
     ]
