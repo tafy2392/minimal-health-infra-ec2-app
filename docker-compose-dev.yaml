@@ -7,3 +7,16 @@ services:
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ./alb-healthz.conf:/etc/nginx/conf.d/alb-healthz.conf:ro
+
+  app:
+    container_name: app
+    restart: unless-stopped
+    image: ghcr.io/tafy2392/minimal-health-infra-ec2-app:${IMAGE_TAG:-latest}
+    expose:
+      - "3000"
+    environment:
+      APP_SECRET: ${APP_SECRET}
+      AWS_REGION: ${AWS_REGION:-eu-central-1}
+      GIT_COMMIT: ${IMAGE_TAG:-unknown}
+      VIRTUAL_HOST: ${APP_VIRTUAL_HOST:-healthcheck-app.delivery-test.bmw.cloud}
+      VIRTUAL_PORT: "3000"
