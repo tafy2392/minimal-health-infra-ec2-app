@@ -103,6 +103,50 @@ Dev and prod use separate S3 state keys/buckets and separate AWS IAM roles — n
 
 ---
 
+## Blue/Green AMI Deployment
+
+The module is already wired for blue/green. Each entry in `golden_amis` (in `main.tfvars`) produces an independent Packer AMI + ASG + Target Group. The ALB HTTPS listener forwards to whichever entry has `active = true`. Traffic cutover is a single `terraform apply`.
+
+**Step 1 — bake the new AMI alongside the current one**
+
+Add a second entry to `golden_amis` with the new install script and `active = false`:
+
+```hcl
+golden_amis = {
+  "golden-ami-al2023-app-v1" = {   # ← currently live (blue)
+    script_name = "install.sh"
+    active      = true
+    asg_name    = "frontend-2026-08"
+  }
+  "golden-ami-al2023-app-v2" = {   # ← new build (green)
+    script_name = "install-v2.sh"
+    active      = false
+    asg_name    = "frontend-2026-09"
+  }
+}
+```
+
+`terraform apply` — Packer builds the v2 AMI, creates its ASG + TG and waits for healthy instances. Blue ASG is untouched; ALB still routes to blue.
+
+**Step 2 — cut over to green**
+
+Flip the `active` flags:
+
+```hcl
+  "golden-ami-al2023-app-v1" = { ..., active = false, ... }
+  "golden-ami-al2023-app-v2" = { ..., active = true,  ... }
+```
+
+`terraform apply` — ALB listener `default_action` switches to the green target group. Zero downtime: ALB drains existing connections from blue before switching.
+
+**Step 3 — remove blue**
+
+Once green is confirmed healthy, delete the v1 entry from `golden_amis` and run `terraform apply`. Blue ASG, launch template, TG, IAM role, and alarms are destroyed cleanly.
+
+**Rollback** — if green is bad before step 3, flip `active` back to v1 and `terraform apply`. Blue ASG is still running and healthy; rollback takes one apply cycle (~30 s).
+
+---
+
 ## Known Issues & Fixes
 
 ### 1. Migrate SSM → SOPS
