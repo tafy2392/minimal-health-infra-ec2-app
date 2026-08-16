@@ -34,6 +34,17 @@
         groups: docker
         append: true
 
+    - name: Write .env file
+      ansible.builtin.copy:
+        dest: "{{ app_dir }}/.env"
+        owner: ec2-user
+        group: ec2-user
+        mode: "0600"
+        content: |
+          APP_SECRET={{ app_secret }}
+          AWS_REGION={{ aws_region }}
+          GIT_COMMIT={{ git_commit }}
+
     - name: Pull latest images
       community.docker.docker_compose_v2_pull:
         project_src: "{{ app_dir }}"
