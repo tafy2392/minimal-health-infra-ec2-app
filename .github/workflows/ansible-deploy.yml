@@ -30,21 +30,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Debug OIDC token claims
-        run: |
-          TOKEN=$(curl -sSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
-          echo "$TOKEN" | python3 -c "
-          import sys, json, base64
-          token = json.load(sys.stdin)['value']
-          payload = token.split('.')[1]
-          payload += '=' * (4 - len(payload) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(payload))
-          print('iss:', claims.get('iss'))
-          print('sub:', claims.get('sub'))
-          print('aud:', claims.get('aud'))
-          "
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -60,7 +45,6 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-          cache: pip
 
       - name: Install Ansible and collections
         run: |
