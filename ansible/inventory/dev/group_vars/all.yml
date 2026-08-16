@@ -1,5 +1,6 @@
 deploy_env: dev
 aws_region: eu-central-1
 app_dir: /opt/app
+app_virtual_host: healthcheck-app.delivery-tst.bmw.cloud
 ansible_aws_ssm_bucket_name: dev-ansible-ssm-468188746919
 ansible_python_interpreter: /usr/bin/python3.13

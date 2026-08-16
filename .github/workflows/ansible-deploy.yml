@@ -125,10 +125,19 @@ jobs:
         working-directory: ansible
         env:
           APP_SECRET: ${{ secrets.APP_SECRET }}
+          APP_VIRTUAL_HOST: ${{ vars.APP_VIRTUAL_HOST }}
         run: |
+          if [ -z "${APP_SECRET}" ]; then
+            echo "ERROR: APP_SECRET is not set. Add it as an environment secret."
+            exit 1
+          fi
+          if [ -n "${APP_VIRTUAL_HOST}" ]; then
+            VHOST_ARG="-e app_virtual_host=${APP_VIRTUAL_HOST}"
+          fi
           ansible-playbook \
             -i inventory/${{ inputs.environment || 'dev' }} \
             -e deploy_env=${{ inputs.environment || 'dev' }} \
             -e app_secret="${APP_SECRET}" \
             -e git_commit=${{ github.sha }} \
+            ${VHOST_ARG:-} \
             playbooks/deploy.yml
