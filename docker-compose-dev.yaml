@@ -7,11 +7,10 @@ services:
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ./alb-healthz.conf:/etc/nginx/conf.d/alb-healthz.conf:ro
-
   app:
     container_name: app
     restart: unless-stopped
-    image: ghcr.io/tafy2392/minimal-health-infra-ec2-app:${IMAGE_TAG:-latest}
+    image: ghcr.io/tafy2392/minimal-health-infra-ec2-app:main--sha---date-HHmmss-
     expose:
       - "3000"
     environment:
