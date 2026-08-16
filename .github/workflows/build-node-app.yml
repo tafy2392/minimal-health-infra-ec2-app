@@ -1,0 +1,102 @@
+name: Build node app image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - int
+          - prod
+      branch:
+        description: "Branch name to embed in image tag (defaults to triggering branch)"
+        required: false
+        type: string
+      image_tag:
+        description: "Override full image tag (skips metadata-action tag generation)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-push:
+    name: Build & push to GHCR
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construct image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=${{ inputs.image_tag || format('{0}-{{sha}}-{{date ''HHmmss''}}', inputs.branch || github.ref_name) }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: app
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  update-compose:
+    name: Update docker-compose image tag
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+    needs: build-push
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Update image tag in docker-compose
+        env:
+          IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
+          ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+        run: |
+          COMPOSE_FILE="docker-compose-${ENVIRONMENT}.yaml"
+          yq -i '.services.app.image = "ghcr.io/${{ github.repository }}:'"${IMAGE_TAG}"'"' "${COMPOSE_FILE}"
+          echo "Updated ${COMPOSE_FILE} to image tag: ${IMAGE_TAG}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docker-compose-${{ inputs.environment || 'dev' }}.yaml
+          git diff --cached --quiet || git commit -m "chore: update app image tag to ${{ needs.build-push.outputs.image_tag }} [skip ci]"
+          git push

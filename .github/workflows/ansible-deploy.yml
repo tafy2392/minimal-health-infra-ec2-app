@@ -123,8 +123,12 @@ jobs:
 
       - name: Run deploy playbook
         working-directory: ansible
+        env:
+          APP_SECRET: ${{ secrets.APP_SECRET }}
         run: |
           ansible-playbook \
             -i inventory/${{ inputs.environment || 'dev' }} \
             -e deploy_env=${{ inputs.environment || 'dev' }} \
+            -e app_secret="${APP_SECRET}" \
+            -e git_commit=${{ github.sha }} \
             playbooks/deploy.yml
