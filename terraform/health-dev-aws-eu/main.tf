@@ -8,7 +8,7 @@ module "aws-lb-sg" {
 
   depends_on     = [module.vpc, module.golden_amis]
   golden_ami_ids = { for key, ami in module.golden_amis : key => ami.ami_id }
-  active_ami     = [for key, ami in var.golden_amis : key if ami.active][0]
+  active_ami     = try([for key, ami in var.golden_amis : key if ami.active][0], null)
   amis           = var.golden_amis
   # we will use public subnet ids since we dont have an IGW for private subnets
   subnet_ids  = module.vpc.public_subnet_ids

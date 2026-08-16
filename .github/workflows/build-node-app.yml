@@ -48,6 +48,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve branch name
+        id: branch
+        run: echo "name=${{ inputs.branch || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
       - name: Construct image metadata
         id: meta
         uses: docker/metadata-action@v6
@@ -57,7 +61,7 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=raw,value=${{ inputs.image_tag || format('{0}-{{sha}}-{{date ''HHmmss''}}', inputs.branch || github.ref_name) }}
+            type=raw,value=${{ steps.branch.outputs.name }}-{{sha}}-{{date 'HHmmss'}}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
