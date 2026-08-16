@@ -39,7 +39,7 @@ chown ec2-user:ec2-user "$${SSH_KEY_DIR}/known_hosts"
 
 log "Cloning repository..."
 
-GIT_SSH_COMMAND="ssh -i $${SSH_KEY_FILE} -o IdentitiesOnly=yes" \
+GIT_SSH_COMMAND="ssh -i $${SSH_KEY_FILE} -o IdentitiesOnly=yes -o UserKnownHostsFile=$${SSH_KEY_DIR}/known_hosts" \
   git clone "${repo_url}" "${app_dir}"
 
 log "Setting app directory ownership..."
