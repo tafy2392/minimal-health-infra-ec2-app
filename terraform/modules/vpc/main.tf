@@ -15,14 +15,18 @@ locals {
   half_count    = local.total_subnets / 2
   public_cidrs  = slice(local.all_cidrs, 0, local.half_count)
   private_cidrs = slice(local.all_cidrs, local.half_count, local.total_subnets)
+
+  common_tags = merge(var.tags, {
+    Environment = var.environment
+  })
 }
 
 resource "aws_vpc" "main" {
   cidr_block = var.cidr_block
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = var.environment
-  }
+  })
 }
 
 # Dynamically provision public subnets from the first half
@@ -33,9 +37,9 @@ resource "aws_subnet" "public" {
   cidr_block              = each.value
   map_public_ip_on_launch = false
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "public-${each.key}"
-  }
+  })
 }
 
 # Dynamically provision private subnets from the second half
@@ -45,7 +49,7 @@ resource "aws_subnet" "private" {
   vpc_id     = aws_vpc.main.id
   cidr_block = each.value
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "private-${each.key}"
-  }
+  })
 }

@@ -1,5 +1,9 @@
 resource "aws_sns_topic" "alarms" {
   name = "${var.environment}-${var.name}-alarms"
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-${var.name}-alarms"
+  })
 }
 
 resource "aws_sns_topic_subscription" "alarms_email" {
@@ -27,6 +31,8 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_hosts" {
 
   alarm_actions = [aws_sns_topic.alarms.arn]
   ok_actions    = [aws_sns_topic.alarms.arn]
+
+  tags = local.common_tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
@@ -47,4 +53,6 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
 
   alarm_actions = [aws_sns_topic.alarms.arn]
   ok_actions    = [aws_sns_topic.alarms.arn]
+
+  tags = local.common_tags
 }

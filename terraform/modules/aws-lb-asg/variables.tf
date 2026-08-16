@@ -48,3 +48,9 @@ variable "alarm_email" {
   type        = string
   description = "Email address to receive CloudWatch alarm notifications"
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Common tags applied to all resources"
+  default     = {}
+}

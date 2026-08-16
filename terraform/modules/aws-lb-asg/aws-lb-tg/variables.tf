@@ -81,3 +81,9 @@ variable "lb_arn_suffix" {
   type        = string
   description = "ARN suffix of the load balancer, used for CloudWatch alarm dimensions"
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Common tags applied to all resources"
+  default     = {}
+}

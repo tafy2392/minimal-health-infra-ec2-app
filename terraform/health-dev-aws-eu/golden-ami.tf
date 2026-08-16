@@ -10,4 +10,5 @@ module "golden_amis" {
   subnet_id       = module.vpc.public_subnet_ids[0]
   ami_name_prefix = each.key
   script_name     = each.value.script_name
+  tags            = var.tags
 }

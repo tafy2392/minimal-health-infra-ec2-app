@@ -4,6 +4,10 @@ locals {
   manifest       = fileexists(local.manifest_path) ? jsondecode(file(local.manifest_path)) : null
   ami_id         = local.manifest != null ? split(":", local.manifest.builds[0].artifact_id)[1] : null
   install_script = abspath("${path.module}/scripts/${var.script_name}")
+
+  common_tags = merge(var.tags, {
+    Environment = var.environment
+  })
 }
 
 data "aws_iam_policy_document" "packer_assume_role" {
@@ -21,6 +25,10 @@ data "aws_iam_policy_document" "packer_assume_role" {
 resource "aws_iam_role" "packer" {
   name               = "${var.environment}-packer-build"
   assume_role_policy = data.aws_iam_policy_document.packer_assume_role.json
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-packer-build"
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "packer_ssm" {
@@ -36,6 +44,10 @@ resource "aws_iam_role_policy_attachment" "packer_cloudwatch" {
 resource "aws_iam_instance_profile" "packer" {
   name = "${var.environment}-packer-build"
   role = aws_iam_role.packer.name
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-packer-build"
+  })
 }
 
 resource "null_resource" "packer_build" {

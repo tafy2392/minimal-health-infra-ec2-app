@@ -3,4 +3,5 @@ module "vpc" {
 
   environment = var.environment
   cidr_block  = var.cidr_block
+  tags        = var.tags
 }
