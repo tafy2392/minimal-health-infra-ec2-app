@@ -45,7 +45,7 @@ jobs:
         run: terraform validate
 
       - name: Install tflint
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@v6
 
       - name: Init tflint
         working-directory: ${{ matrix.tf_dir }}
