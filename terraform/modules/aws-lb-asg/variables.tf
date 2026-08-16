@@ -43,3 +43,8 @@ variable "github_ssh_key" {
   description = "SSH private key content for GitHub deploy key"
   sensitive   = true
 }
+
+variable "alarm_email" {
+  type        = string
+  description = "Email address to receive CloudWatch alarm notifications"
+}

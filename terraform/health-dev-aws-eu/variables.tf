@@ -44,3 +44,8 @@ variable "github_ssh_key_ssm_param" {
   type        = string
   description = "SSM Parameter Store path for the SSH deploy key used by user_data to clone the repo"
 }
+
+variable "alarm_email" {
+  type        = string
+  description = "Email address to receive CloudWatch alarm notifications"
+}
