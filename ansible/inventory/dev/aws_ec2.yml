@@ -1,0 +1,15 @@
+plugin: aws_ec2
+
+regions:
+  - eu-central-1
+
+filters:
+  tag:AsgName:
+    - dev-frontend-2026-08-asg
+  instance-state-name: running
+
+hostnames:
+  - instance-id
+
+compose:
+  ansible_host: instance_id
