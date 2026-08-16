@@ -3,7 +3,7 @@ module "github-oidc" {
   version = "2.3.0"
 
   create_oidc_provider = false
-  oidc_provider_arn    = var.oidc_provider_arn
+  oidc_provider_arn    = var.oidc_provider_arns[0]
   create_oidc_role     = true
 
   role_name        = "${var.environment}-${var.role_name}"

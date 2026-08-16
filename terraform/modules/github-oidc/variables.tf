@@ -20,7 +20,7 @@ variable "policies" {
   default = []
 }
 
-variable "oidc_provider_arn" {
-  type        = string
-  description = "ARN of the existing GitHub OIDC provider."
+variable "oidc_provider_arns" {
+  type        = list(string)
+  description = "ARNs of the OIDC providers allowed to assume this role."
 }
