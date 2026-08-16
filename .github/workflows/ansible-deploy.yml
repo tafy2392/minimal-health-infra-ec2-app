@@ -45,10 +45,12 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.13"
+          cache: pip
+          cache-dependency-path: ansible/requirements.txt
 
       - name: Install Ansible and collections
         run: |
-          pip install --upgrade pip ansible
+          pip install --upgrade pip -r ansible/requirements.txt
           ansible-galaxy collection install -r ansible/requirements.yml
 
       - name: Run deploy playbook
@@ -56,4 +58,5 @@ jobs:
         run: |
           ansible-playbook \
             -i inventory/${{ inputs.environment || 'dev' }} \
+            -e environment=${{ inputs.environment || 'dev' }} \
             playbooks/deploy.yml
