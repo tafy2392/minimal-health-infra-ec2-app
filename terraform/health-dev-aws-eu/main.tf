@@ -12,4 +12,7 @@ module "aws-lb-sg" {
 
   # we dont manage the domain so we are importing the certificate already in aws cert manager
   https_listener_certificate_arn = data.aws_acm_certificate.lb_certificate_frontend.arn
+
+  repo_url               = var.repo_url
+  github_token_ssm_param = var.github_token_ssm_param
 }

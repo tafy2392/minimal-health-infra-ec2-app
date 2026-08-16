@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 data "aws_iam_policy_document" "app_assume_role" {
   statement {
     effect  = "Allow"
@@ -18,6 +20,11 @@ resource "aws_iam_role" "app" {
 resource "aws_iam_role_policy_attachment" "app_ssm" {
   role       = aws_iam_role.app.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "app_ssm_param" {
+  role       = aws_iam_role.app.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "app_cloudwatch" {
@@ -58,6 +65,14 @@ resource "aws_launch_template" "app" {
   name_prefix   = "${var.environment}-${var.name}"
   image_id      = var.image_id
   instance_type = var.instance_type
+
+  user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
+    repo_url                = var.repo_url
+    github_token_ssm_param  = var.github_token_ssm_param
+    deploy_env              = var.deploy_env
+    app_dir                 = var.app_dir
+    aws_region              = data.aws_region.current.id
+  }))
 
   iam_instance_profile {
     arn = aws_iam_instance_profile.app.arn

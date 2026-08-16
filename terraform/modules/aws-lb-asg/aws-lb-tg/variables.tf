@@ -49,3 +49,24 @@ variable "lb_sg_id" {
   type        = string
   description = "Security group ID of the load balancer, used to allow inbound HTTP to instances."
 }
+
+variable "repo_url" {
+  type        = string
+  description = "GitHub repository URL (without scheme), e.g. github.com/org/repo"
+}
+
+variable "github_token_ssm_param" {
+  type        = string
+  description = "SSM Parameter Store path holding the GitHub token (SecureString)"
+}
+
+variable "deploy_env" {
+  type        = string
+  description = "Environment name used to select the docker-compose file"
+}
+
+variable "app_dir" {
+  type        = string
+  description = "Directory on the instance where the repo is cloned"
+  default     = "/opt/app"
+}

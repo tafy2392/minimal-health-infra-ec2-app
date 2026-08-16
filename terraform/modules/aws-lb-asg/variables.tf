@@ -31,3 +31,13 @@ variable "golden_ami_ids" {
 variable "active_ami" {
   type = string
 }
+
+variable "repo_url" {
+  type        = string
+  description = "GitHub repository URL (without scheme), e.g. github.com/org/repo"
+}
+
+variable "github_token_ssm_param" {
+  type        = string
+  description = "SSM Parameter Store path holding the GitHub token (SecureString)"
+}

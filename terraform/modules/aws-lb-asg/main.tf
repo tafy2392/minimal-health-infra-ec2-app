@@ -104,10 +104,13 @@ module "aws-lb-tg" {
 
   for_each = var.amis
 
-  name        = each.value.asg_name
-  subnet_ids  = var.subnet_ids
-  vpc_id      = var.vpc_id
-  lb_sg_id    = aws_security_group.lb_sg.id
-  image_id    = var.golden_ami_ids[each.key]
-  environment = var.environment
+  name                   = each.value.asg_name
+  subnet_ids             = var.subnet_ids
+  vpc_id                 = var.vpc_id
+  lb_sg_id               = aws_security_group.lb_sg.id
+  image_id               = var.golden_ami_ids[each.key]
+  environment            = var.environment
+  repo_url               = var.repo_url
+  github_token_ssm_param = var.github_token_ssm_param
+  deploy_env             = var.environment
 }
