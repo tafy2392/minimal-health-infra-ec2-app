@@ -25,7 +25,7 @@ resource "aws_route_table_association" "private" {
 
 resource "aws_route_table_association" "public" {
   for_each = { for idx, cidr in local.public_cidrs : idx => cidr }
-   
+
   subnet_id      = aws_subnet.public[each.key].id
   route_table_id = aws_route_table.public.id
 }

@@ -110,16 +110,18 @@ module "aws-lb-tg" {
 
   for_each = var.amis
 
-  name                   = each.value.asg_name
-  subnet_ids             = var.subnet_ids
-  vpc_id                 = var.vpc_id
-  lb_sg_id               = aws_security_group.lb_sg.id
-  image_id               = var.golden_ami_ids[each.key]
-  environment            = var.environment
-  repo_url               = var.repo_url
-  github_ssh_key         = var.github_ssh_key
-  deploy_env             = var.environment
-  alarm_email            = var.alarm_email
-  lb_arn_suffix          = aws_lb.frontend.arn_suffix
-  tags                   = var.tags
+  name             = each.value.asg_name
+  subnet_ids       = var.subnet_ids
+  vpc_id           = var.vpc_id
+  lb_sg_id         = aws_security_group.lb_sg.id
+  image_id         = var.golden_ami_ids[each.key]
+  environment      = var.environment
+  repo_url         = var.repo_url
+  github_ssh_key   = var.github_ssh_key
+  deploy_env       = var.environment
+  alarm_email      = var.alarm_email
+  app_secret       = var.app_secret
+  app_virtual_host = var.app_virtual_host
+  lb_arn_suffix    = aws_lb.frontend.arn_suffix
+  tags             = var.tags
 }

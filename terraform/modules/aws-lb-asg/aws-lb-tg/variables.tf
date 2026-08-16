@@ -77,6 +77,17 @@ variable "alarm_email" {
   description = "Email address to receive CloudWatch alarm notifications"
 }
 
+variable "app_secret" {
+  type        = string
+  description = "APP_SECRET value for the application"
+  sensitive   = true
+}
+
+variable "app_virtual_host" {
+  type        = string
+  description = "Virtual host hostname for the application"
+}
+
 variable "lb_arn_suffix" {
   type        = string
   description = "ARN suffix of the load balancer, used for CloudWatch alarm dimensions"

@@ -3,6 +3,15 @@ data "aws_ssm_parameter" "github_ssh_key" {
   with_decryption = true
 }
 
+data "aws_ssm_parameter" "app_secret" {
+  name            = var.app_secret_ssm_param
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "app_virtual_host" {
+  name = var.app_virtual_host_ssm_param
+}
+
 module "aws-lb-sg" {
   source = "../modules/aws-lb-asg"
 
@@ -21,5 +30,9 @@ module "aws-lb-sg" {
   repo_url       = var.repo_url
   github_ssh_key = data.aws_ssm_parameter.github_ssh_key.value
   alarm_email    = var.alarm_email
-  tags           = var.tags
+
+  app_secret       = data.aws_ssm_parameter.app_secret.value
+  app_virtual_host = data.aws_ssm_parameter.app_virtual_host.value
+
+  tags = var.tags
 }

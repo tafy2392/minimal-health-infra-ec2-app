@@ -45,6 +45,16 @@ variable "github_ssh_key_ssm_param" {
   description = "SSM Parameter Store path for the SSH deploy key used by user_data to clone the repo"
 }
 
+variable "app_secret_ssm_param" {
+  type        = string
+  description = "SSM Parameter Store path for APP_SECRET fetched by user_data at instance boot"
+}
+
+variable "app_virtual_host_ssm_param" {
+  type        = string
+  description = "SSM Parameter Store path for APP_VIRTUAL_HOST fetched by user_data at instance boot"
+}
+
 variable "alarm_email" {
   type        = string
   description = "Email address to receive CloudWatch alarm notifications"
