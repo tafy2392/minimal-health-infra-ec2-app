@@ -1,3 +1,7 @@
+terraform {
+  required_version = "~> 1.11"
+}
+
 module "backend" {
   source                       = "squareops/tfstate/aws"
   version                      = "1.1.1"

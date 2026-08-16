@@ -29,7 +29,8 @@ variable "golden_ami_ids" {
 }
 
 variable "active_ami" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "repo_url" {
