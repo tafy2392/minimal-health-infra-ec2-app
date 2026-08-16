@@ -8,7 +8,7 @@ A single-environment, multi-AZ web tier in **eu-central-1** serving the `rewards
 
 **Compute:** EC2 Auto Scaling Group (`min=1 / max=2`, `t3.small`) spread across 2 public `/26` subnets — no AZ pinning, no NAT gateway. Docker Compose runs nginx-proxy + the rewards container on each instance.
 
-**Networking:** VPC `10.19.0.0/24` split into 4× `/26` subnets (2 public used, 2 private reserved). IGW attached; instances have public IPs. Security groups allow only ALB → instance traffic on port 80; no inbound port 22.
+**Networking:** VPC `10.19.0.0/24` split into 4× `/26` subnets (2 public used, 2 private reserved). IGW attached; instances have public IPs. Security groups allow only ALB → instance traffic on port 80; no inbound port 22. Instances are in public subnets because the Terraform OIDC role lacked `ec2:CreateNatGateway` and `ec2:AllocateAddress` permissions — private subnets with a NAT Gateway were not possible under these constraints. In prod, scope the Terraform role correctly and move instances to private subnets behind a NAT Gateway.
 
 **Instance access:** SSM Session Manager only — Ansible connects via `aws ssm start-session`, no SSH keys on instances.
 
@@ -83,7 +83,7 @@ graph TB
 | Concern       | Choice                                                                        | Trade-off                                                       |
 |---------------|-------------------------------------------------------------------------------|-----------------------------------------------------------------|
 | State         | S3 + DynamoDB lock                                                            | Simple, team-safe; Terraform Cloud adds UI/RBAC but extra SaaS |
-| Compute       | EC2 ASG + ALB, public subnets                                                 | No NAT gateway saves ~$32/month; assignment constraint          |
+| Compute       | EC2 ASG + ALB, **public** subnets (no NAT)                                    | Terraform role lacked `ec2:CreateNatGateway`/`AllocateAddress`; move to private subnets in prod |
 | Access        | SSM Session Manager — no port 22                                              | No key rotation, full audit trail in CloudTrail                 |
 | Secrets       | SOPS + AWS KMS → `.tfvars.enc` / `group_vars.enc` → launch template → `/opt/app/.env` | Ciphertext in repo; KMS key per env; no SSM dependency  |
 | Observability | CW alarms: `UnHealthyHostCount ≥ 1` + `CPUUtilization ≥ 80%` → SNS email    | Required path; add Prometheus/Grafana for prod                  |
@@ -100,6 +100,50 @@ graph TB
 4. Trigger prod deploy via `workflow_dispatch` with manual approval reviewer on the `prod` environment.
 
 Dev and prod use separate S3 state keys/buckets and separate AWS IAM roles — no shared credentials.
+
+---
+
+## Blue/Green AMI Deployment
+
+The module is already wired for blue/green. Each entry in `golden_amis` (in `main.tfvars`) produces an independent Packer AMI + ASG + Target Group. The ALB HTTPS listener forwards to whichever entry has `active = true`. Traffic cutover is a single `terraform apply`.
+
+**Step 1 — bake the new AMI alongside the current one**
+
+Add a second entry to `golden_amis` with the new install script and `active = false`:
+
+```hcl
+golden_amis = {
+  "golden-ami-al2023-app-v1" = {   # ← currently live (blue)
+    script_name = "install.sh"
+    active      = true
+    asg_name    = "frontend-2026-08"
+  }
+  "golden-ami-al2023-app-v2" = {   # ← new build (green)
+    script_name = "install-v2.sh"
+    active      = false
+    asg_name    = "frontend-2026-09"
+  }
+}
+```
+
+`terraform apply` — Packer builds the v2 AMI, creates its ASG + TG and waits for healthy instances. Blue ASG is untouched; ALB still routes to blue.
+
+**Step 2 — cut over to green**
+
+Flip the `active` flags:
+
+```hcl
+  "golden-ami-al2023-app-v1" = { ..., active = false, ... }
+  "golden-ami-al2023-app-v2" = { ..., active = true,  ... }
+```
+
+`terraform apply` — ALB listener `default_action` switches to the green target group. Zero downtime: ALB drains existing connections from blue before switching.
+
+**Step 3 — remove blue**
+
+Once green is confirmed healthy, delete the v1 entry from `golden_amis` and run `terraform apply`. Blue ASG, launch template, TG, IAM role, and alarms are destroyed cleanly.
+
+**Rollback** — if green is bad before step 3, flip `active` back to v1 and `terraform apply`. Blue ASG is still running and healthy; rollback takes one apply cycle (~30 s).
 
 ---
 
