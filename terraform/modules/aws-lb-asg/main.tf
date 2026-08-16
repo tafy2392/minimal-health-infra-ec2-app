@@ -107,6 +107,7 @@ module "aws-lb-tg" {
   name        = each.value.asg_name
   subnet_ids  = var.subnet_ids
   vpc_id      = var.vpc_id
+  lb_sg_id    = aws_security_group.lb_sg.id
   image_id    = var.golden_ami_ids[each.key]
   environment = var.environment
 }

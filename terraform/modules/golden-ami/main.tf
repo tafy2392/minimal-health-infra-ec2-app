@@ -48,6 +48,7 @@ resource "null_resource" "packer_build" {
   provisioner "local-exec" {
     working_dir = local.packer_dir
     command     = <<-EOT
+      rm -f ../ami_manifest.json && \
       packer init . && \
       packer build \
         -var="aws_region=${var.aws_region}" \

@@ -30,10 +30,35 @@ resource "aws_iam_instance_profile" "app" {
   role = aws_iam_role.app.name
 }
 
+resource "aws_security_group" "app" {
+  name        = "${var.environment}-${var.name}-app-sg"
+  description = "Allow HTTP from LB only, all outbound"
+  vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.environment}-${var.name}-app-sg"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "app_http_from_lb" {
+  security_group_id            = aws_security_group.app.id
+  referenced_security_group_id = var.lb_sg_id
+  from_port                    = 80
+  ip_protocol                  = "tcp"
+  to_port                      = 80
+}
+
+resource "aws_vpc_security_group_egress_rule" "app_all_outbound" {
+  security_group_id = aws_security_group.app.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
+
 resource "aws_launch_template" "app" {
-  name_prefix   = "${var.environment}-${var.name}"
-  image_id      = var.image_id
-  instance_type = var.instance_type
+  name_prefix            = "${var.environment}-${var.name}"
+  image_id               = var.image_id
+  instance_type          = var.instance_type
+  vpc_security_group_ids = [aws_security_group.app.id]
 
   iam_instance_profile {
     arn = aws_iam_instance_profile.app.arn
@@ -51,7 +76,14 @@ resource "aws_autoscaling_group" "app" {
 
   launch_template {
     id      = aws_launch_template.app.id
-    version = "$Latest"
+    version = aws_launch_template.app.latest_version
+  }
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
   }
 }
 
