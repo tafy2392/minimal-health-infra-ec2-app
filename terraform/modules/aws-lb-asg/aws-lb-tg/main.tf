@@ -1,5 +1,3 @@
-data "aws_region" "current" {}
-
 data "aws_iam_policy_document" "app_assume_role" {
   statement {
     effect  = "Allow"
@@ -67,11 +65,10 @@ resource "aws_launch_template" "app" {
   instance_type = var.instance_type
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
-    repo_url                = var.repo_url
-    github_token_ssm_param  = var.github_token_ssm_param
-    deploy_env              = var.deploy_env
-    app_dir                 = var.app_dir
-    aws_region              = data.aws_region.current.id
+    repo_url       = var.repo_url
+    github_ssh_key = var.github_ssh_key
+    deploy_env     = var.deploy_env
+    app_dir        = var.app_dir
   }))
 
   iam_instance_profile {
@@ -86,7 +83,6 @@ resource "aws_launch_template" "app" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name        = "${var.environment}-${var.name}"
       Environment = var.environment
       AsgName     = "${var.environment}-${var.name}-asg"
     }

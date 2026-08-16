@@ -3,12 +3,12 @@
     {
       "name": "al2023",
       "builder_type": "amazon-ebs",
-      "build_time": 1786879141,
+      "build_time": 1786905784,
       "files": null,
-      "artifact_id": "eu-central-1:ami-0f794f85ea2b48678",
-      "packer_run_uuid": "8ff13b7c-fcb2-0e47-23af-8226a1bc607f",
+      "artifact_id": "eu-central-1:ami-0d16b58248bee86ac",
+      "packer_run_uuid": "3a1c2259-576d-58db-d258-1935907cbf7b",
       "custom_data": null
     }
   ],
-  "last_run_uuid": "8ff13b7c-fcb2-0e47-23af-8226a1bc607f"
+  "last_run_uuid": "3a1c2259-576d-58db-d258-1935907cbf7b"
 }

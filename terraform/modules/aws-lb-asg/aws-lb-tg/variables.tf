@@ -55,9 +55,10 @@ variable "repo_url" {
   description = "GitHub repository URL (without scheme), e.g. github.com/org/repo"
 }
 
-variable "github_token_ssm_param" {
+variable "github_ssh_key" {
   type        = string
-  description = "SSM Parameter Store path holding the GitHub token (SecureString)"
+  description = "SSH private key content for GitHub deploy key"
+  sensitive   = true
 }
 
 variable "deploy_env" {

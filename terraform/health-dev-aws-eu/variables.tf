@@ -40,7 +40,7 @@ variable "repo_url" {
   description = "GitHub repository URL without scheme, e.g. github.com/org/repo"
 }
 
-variable "github_token_ssm_param" {
+variable "github_ssh_key_ssm_param" {
   type        = string
-  description = "SSM Parameter Store path for the GitHub token used by user_data to clone the repo"
+  description = "SSM Parameter Store path for the SSH deploy key used by user_data to clone the repo"
 }

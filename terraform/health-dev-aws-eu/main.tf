@@ -1,3 +1,8 @@
+data "aws_ssm_parameter" "github_ssh_key" {
+  name            = var.github_ssh_key_ssm_param
+  with_decryption = true
+}
+
 module "aws-lb-sg" {
   source = "../modules/aws-lb-asg"
 
@@ -13,6 +18,6 @@ module "aws-lb-sg" {
   # we dont manage the domain so we are importing the certificate already in aws cert manager
   https_listener_certificate_arn = data.aws_acm_certificate.lb_certificate_frontend.arn
 
-  repo_url               = var.repo_url
-  github_token_ssm_param = var.github_token_ssm_param
+  repo_url       = var.repo_url
+  github_ssh_key = data.aws_ssm_parameter.github_ssh_key.value
 }

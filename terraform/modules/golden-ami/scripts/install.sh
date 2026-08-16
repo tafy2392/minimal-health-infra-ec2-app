@@ -81,15 +81,13 @@ EOF
 log "Enabling CloudWatch agent on boot..."
 sudo systemctl enable amazon-cloudwatch-agent
 
-log "Pointing python3/pip3 to 3.13..."
-sudo alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 1
-sudo alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.13 1
-
 log "Verifying installed versions..."
 git --version
-python3 --version
-pip3 --version
+python3.13 --version
 docker --version
 docker compose version
+
+log "Resetting cloud-init so user-data runs on first boot of new instances..."
+sudo cloud-init clean --logs
 
 log "Provisioning complete."

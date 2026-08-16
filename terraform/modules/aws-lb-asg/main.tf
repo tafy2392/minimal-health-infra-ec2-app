@@ -110,7 +110,7 @@ module "aws-lb-tg" {
   lb_sg_id               = aws_security_group.lb_sg.id
   image_id               = var.golden_ami_ids[each.key]
   environment            = var.environment
-  repo_url               = var.repo_url
-  github_token_ssm_param = var.github_token_ssm_param
-  deploy_env             = var.environment
+  repo_url       = var.repo_url
+  github_ssh_key = var.github_ssh_key
+  deploy_env     = var.environment
 }
