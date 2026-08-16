@@ -10,7 +10,7 @@ tags = {
 
 repo_url                 = "git@github.com:tafy2392/minimal-health-infra-ec2-app.git"
 github_ssh_key_ssm_param = "/dev/github/clone-token"
-alarm_email              = "tafymunya@gmaail.com"
+alarm_email              = "tafymunya@gmail.com"
 
 golden_amis = {
   "golden-ami-al2023-app" = {
