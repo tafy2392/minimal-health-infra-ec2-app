@@ -28,6 +28,12 @@
         group: ec2-user
         mode: "0644"
 
+    - name: Add ec2-user to docker group
+      ansible.builtin.user:
+        name: ec2-user
+        groups: docker
+        append: true
+
     - name: Pull latest images
       community.docker.docker_compose_v2_pull:
         project_src: "{{ app_dir }}"

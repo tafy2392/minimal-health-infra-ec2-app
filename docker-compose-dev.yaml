@@ -6,4 +6,4 @@ services:
       - "80:80"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - ./alb-healthz.conf:/etc/nginx/vhosts.d/default.conf:ro
+      - ./alb-healthz.conf:/etc/nginx/conf.d/alb-healthz.conf:ro
