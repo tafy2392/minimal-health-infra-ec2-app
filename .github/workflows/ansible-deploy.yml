@@ -1,0 +1,54 @@
+name: Ansible Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - int
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment || 'dev' }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.ANSIBLE_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install Session manager plugin
+        uses: ankurk91/install-session-manager-plugin-action@v1
+        with:
+          cache: true
+
+      - name: Install Ansible and collections
+        run: |
+          pip install --upgrade ansible
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Run deploy playbook
+        working-directory: ansible
+        run: |
+          ansible-playbook \
+            -i inventory/${{ inputs.environment || 'dev' }} \
+            playbooks/deploy.yml
