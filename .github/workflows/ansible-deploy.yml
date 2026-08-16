@@ -1,7 +1,10 @@
 name: Deploy to Appropriate Environment
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Build node app image"]
+    types:
+      - completed
     branches:
       - main
   workflow_dispatch:
@@ -25,6 +28,7 @@ jobs:
     name: Terraform apply (${{ inputs.environment || 'dev' }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'dev' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout
