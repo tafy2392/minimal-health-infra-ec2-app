@@ -10,7 +10,7 @@ services:
   app:
     container_name: app
     restart: unless-stopped
-    image: ghcr.io/tafy2392/minimal-health-infra-ec2-app:main-db34c8b-224947
+    image: ghcr.io/tafy2392/minimal-health-infra-ec2-app:main-2c09242-233924
     expose:
       - "3000"
     environment:
