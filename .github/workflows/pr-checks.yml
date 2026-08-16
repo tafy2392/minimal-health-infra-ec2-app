@@ -32,6 +32,11 @@ jobs:
         with:
           terraform_version: "~> 1.11"
 
+      - name: Install Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: "~> 1.15"
+
       - name: Terraform format check
         working-directory: ${{ matrix.tf_dir }}
         run: terraform fmt -check -recursive
@@ -81,6 +86,18 @@ jobs:
         uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "~> 1.11"
+
+      - name: Install SSM session manager plugin
+        run: |
+          curl --silent --location \
+            "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" \
+            -o /tmp/session-manager-plugin.deb
+          sudo dpkg -i /tmp/session-manager-plugin.deb
+
+      - name: Install Packer
+        uses: hashicorp/setup-packer@v3
+        with:
+          version: "~> 1.15"
 
       - name: Terraform init
         working-directory: ${{ matrix.tf_dir }}
