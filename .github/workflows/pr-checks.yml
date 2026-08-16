@@ -1,0 +1,106 @@
+name: PR checks
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  static-checks:
+    name: Terraform fmt & validate (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev]
+        include:
+          - environment: dev
+            tf_dir: terraform/health-dev-aws-eu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.11"
+
+      - name: Terraform format check
+        working-directory: ${{ matrix.tf_dir }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        working-directory: ${{ matrix.tf_dir }}
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        working-directory: ${{ matrix.tf_dir }}
+        run: terraform validate
+
+      - name: Install tflint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Init tflint
+        working-directory: ${{ matrix.tf_dir }}
+        run: tflint --init
+
+      - name: Run tflint
+        working-directory: ${{ matrix.tf_dir }}
+        run: tflint --recursive
+
+  terraform-plan:
+    name: Terraform plan (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev]
+        include:
+          - environment: dev
+            tf_dir: terraform/health-dev-aws-eu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "~> 1.11"
+
+      - name: Terraform init
+        working-directory: ${{ matrix.tf_dir }}
+        run: terraform init -backend-config=backend.tfvars
+
+      - name: Terraform plan
+        id: plan
+        working-directory: ${{ matrix.tf_dir }}
+        run: terraform plan -var-file=main.tfvars -no-color 2>&1 | tee plan.txt
+
+      - name: Post plan as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('${{ matrix.tf_dir }}/plan.txt', 'utf8');
+            const truncated = plan.length > 65000 ? plan.slice(0, 65000) + '\n... (truncated)' : plan;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `### Terraform plan (${{ matrix.environment }})\n\`\`\`\n${truncated}\n\`\`\``
+            });

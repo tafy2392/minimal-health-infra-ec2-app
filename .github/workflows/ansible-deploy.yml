@@ -1,4 +1,4 @@
-name: Ansible Deploy
+name: Deploy to Appropriate Environment
 
 on:
   push:
@@ -21,10 +21,75 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    name: Deploy to ${{ inputs.environment || 'dev' }}
+  terraform-apply:
+    name: Terraform apply (${{ inputs.environment || 'dev' }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "~> 1.11"
+
+      - name: Terraform init
+        working-directory: terraform/health-dev-aws-eu
+        run: terraform init -backend-config=backend.tfvars -var-file=main.tfvars
+
+      - name: Terraform apply
+        working-directory: terraform/health-dev-aws-eu
+        run: terraform apply -auto-approve -var-file=main.tfvars
+
+  wait-for-refresh:
+    name: Wait for instance refresh (${{ inputs.environment || 'dev' }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+    needs: terraform-apply
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Wait for instance refresh to complete
+        run: |
+          ASG_NAME=$(aws autoscaling describe-auto-scaling-groups \
+            --query "AutoScalingGroups[?contains(Tags[?Key=='Environment'].Value, '${{ inputs.environment || 'dev' }}')].AutoScalingGroupName" \
+            --output text)
+          echo "Waiting for instance refresh on ASG: $ASG_NAME"
+          for i in $(seq 1 30); do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name "$ASG_NAME" \
+              --query "InstanceRefreshes[0].Status" \
+              --output text 2>/dev/null || echo "None")
+            echo "[$i/30] Status: $STATUS"
+            if [[ "$STATUS" == "Successful" || "$STATUS" == "None" ]]; then
+              echo "Instance refresh complete or not running."
+              break
+            fi
+            if [[ "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
+              echo "Instance refresh failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 20
+          done
+
+  ansible-deploy:
+    name: Ansible deploy (${{ inputs.environment || 'dev' }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+    needs: wait-for-refresh
 
     steps:
       - name: Checkout
@@ -52,7 +117,8 @@ jobs:
 
       - name: Install Ansible and collections
         run: |
-          pip install --upgrade pip -r ansible/requirements.txt
+          pip install --upgrade pip
+          pip install -r ansible/requirements.txt
           ansible-galaxy collection install -r ansible/requirements.yml
 
       - name: Run deploy playbook
