@@ -38,7 +38,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv6" {
   to_port           = 443
 }
 
-resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
+resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv4" {
   security_group_id = aws_security_group.lb_sg.id
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 80
@@ -46,7 +46,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
   to_port           = 80
 }
 
-resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv6" {
+resource "aws_vpc_security_group_ingress_rule" "allow_http_ipv6" {
   security_group_id = aws_security_group.lb_sg.id
   cidr_ipv6         = "::/0"
   from_port         = 80
@@ -67,16 +67,18 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
 }
 
 resource "aws_lb_listener" "frontend_https" {
+
+  depends_on        = [module.aws-lb-tg]
   load_balancer_arn = aws_lb.frontend.arn
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   # we dont have route53 hosted zone so setting up a pre imported certificate
-  certificate_arn   = var.https_listener_certificate_arn
+  certificate_arn = var.https_listener_certificate_arn
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.front_end.arn
+    target_group_arn = module.aws-lb-tg[var.active_ami].target_group_arn
   }
 }
 
@@ -94,4 +96,17 @@ resource "aws_lb_listener" "frontend_http" {
       status_code = "HTTP_301"
     }
   }
+}
+
+module "aws-lb-tg" {
+
+  source = "./aws-lb-tg"
+
+  for_each = var.amis
+
+  name        = each.value.asg_name
+  subnet_ids  = var.subnet_ids
+  vpc_id      = var.vpc_id
+  image_id    = var.golden_ami_ids[each.key]
+  environment = var.environment
 }
