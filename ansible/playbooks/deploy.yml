@@ -22,7 +22,7 @@
 
     - name: Copy nginx vhost config
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../alb-healthz.conf"
+        src: "{{ playbook_dir }}/../../alb-healthz.conf"
         dest: "{{ app_dir }}/alb-healthz.conf"
         owner: ec2-user
         group: ec2-user
