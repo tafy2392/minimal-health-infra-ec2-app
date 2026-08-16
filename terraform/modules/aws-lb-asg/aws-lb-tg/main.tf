@@ -55,13 +55,17 @@ resource "aws_vpc_security_group_egress_rule" "app_all_outbound" {
 }
 
 resource "aws_launch_template" "app" {
-  name_prefix            = "${var.environment}-${var.name}"
-  image_id               = var.image_id
-  instance_type          = var.instance_type
-  vpc_security_group_ids = [aws_security_group.app.id]
+  name_prefix   = "${var.environment}-${var.name}"
+  image_id      = var.image_id
+  instance_type = var.instance_type
 
   iam_instance_profile {
     arn = aws_iam_instance_profile.app.arn
+  }
+
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [aws_security_group.app.id]
   }
 }
 
