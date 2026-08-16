@@ -20,4 +20,6 @@ module "aws-lb-sg" {
 
   repo_url       = var.repo_url
   github_ssh_key = data.aws_ssm_parameter.github_ssh_key.value
+  alarm_email    = var.alarm_email
+  tags           = var.tags
 }

@@ -71,3 +71,19 @@ variable "app_dir" {
   description = "Directory on the instance where the repo is cloned"
   default     = "/opt/app"
 }
+
+variable "alarm_email" {
+  type        = string
+  description = "Email address to receive CloudWatch alarm notifications"
+}
+
+variable "lb_arn_suffix" {
+  type        = string
+  description = "ARN suffix of the load balancer, used for CloudWatch alarm dimensions"
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "Common tags applied to all resources"
+  default     = {}
+}

@@ -2,8 +2,15 @@ region      = "eu-central-1"
 environment = "dev"
 cidr_block  = "10.19.0.0/24"
 
+tags = {
+  Service    = "rewards"
+  Owner      = "candidate"
+  CostCenter = "payments"
+}
+
 repo_url                 = "git@github.com:tafy2392/minimal-health-infra-ec2-app.git"
 github_ssh_key_ssm_param = "/dev/github/clone-token"
+alarm_email              = "tafymunya@gmail.com"
 
 golden_amis = {
   "golden-ami-al2023-app" = {

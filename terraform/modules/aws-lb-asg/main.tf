@@ -1,3 +1,9 @@
+locals {
+  common_tags = merge(var.tags, {
+    Environment = var.environment
+  })
+}
+
 resource "aws_lb" "frontend" {
   name               = "${var.environment}-lb"
   internal           = false
@@ -7,9 +13,9 @@ resource "aws_lb" "frontend" {
 
   enable_deletion_protection = true
 
-  tags = {
-    Environment = var.environment
-  }
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-lb"
+  })
 }
 
 resource "aws_security_group" "lb_sg" {
@@ -17,9 +23,9 @@ resource "aws_security_group" "lb_sg" {
   description = "Allow http and https inbound traffic and all outbound traffic"
   vpc_id      = var.vpc_id
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "${var.environment}-frontend-lb-sg"
-  }
+  })
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_tls_ipv4" {
@@ -110,7 +116,10 @@ module "aws-lb-tg" {
   lb_sg_id               = aws_security_group.lb_sg.id
   image_id               = var.golden_ami_ids[each.key]
   environment            = var.environment
-  repo_url       = var.repo_url
-  github_ssh_key = var.github_ssh_key
-  deploy_env     = var.environment
+  repo_url               = var.repo_url
+  github_ssh_key         = var.github_ssh_key
+  deploy_env             = var.environment
+  alarm_email            = var.alarm_email
+  lb_arn_suffix          = aws_lb.frontend.arn_suffix
+  tags                   = var.tags
 }

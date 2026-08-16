@@ -3,17 +3,17 @@ resource "aws_route_table" "private" {
 
   vpc_id = aws_vpc.main.id
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "private-${each.key}"
-  }
+  })
 }
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "${var.environment}-public"
-  }
+  })
 }
 
 resource "aws_route_table_association" "private" {

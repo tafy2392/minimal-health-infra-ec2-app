@@ -1,3 +1,9 @@
+locals {
+  common_tags = merge(var.tags, {
+    Environment = var.environment
+  })
+}
+
 data "aws_iam_policy_document" "app_assume_role" {
   statement {
     effect  = "Allow"
@@ -13,6 +19,10 @@ data "aws_iam_policy_document" "app_assume_role" {
 resource "aws_iam_role" "app" {
   name               = "${var.environment}-${var.name}-app-role"
   assume_role_policy = data.aws_iam_policy_document.app_assume_role.json
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-${var.name}-app-role"
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "app_ssm" {
@@ -33,6 +43,10 @@ resource "aws_iam_role_policy_attachment" "app_cloudwatch" {
 resource "aws_iam_instance_profile" "app" {
   name = "${var.environment}-${var.name}-ec2"
   role = aws_iam_role.app.name
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-${var.name}-ec2"
+  })
 }
 
 resource "aws_security_group" "app" {
@@ -40,9 +54,9 @@ resource "aws_security_group" "app" {
   description = "Allow HTTP from LB only, all outbound"
   vpc_id      = var.vpc_id
 
-  tags = {
+  tags = merge(local.common_tags, {
     Name = "${var.environment}-${var.name}-app-sg"
-  }
+  })
 }
 
 resource "aws_vpc_security_group_ingress_rule" "app_http_from_lb" {
@@ -82,11 +96,15 @@ resource "aws_launch_template" "app" {
 
   tag_specifications {
     resource_type = "instance"
-    tags = {
-      Environment = var.environment
-      AsgName     = "${var.environment}-${var.name}-asg"
-    }
+    tags = merge(local.common_tags, {
+      Name    = "${var.environment}-${var.name}-instance"
+      AsgName = "${var.environment}-${var.name}-asg"
+    })
   }
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-${var.name}-lt"
+  })
 }
 
 resource "aws_autoscaling_group" "app" {
@@ -110,6 +128,17 @@ resource "aws_autoscaling_group" "app" {
       min_healthy_percentage = 50
     }
   }
+
+  dynamic "tag" {
+    for_each = merge(local.common_tags, {
+      Name = "${var.environment}-${var.name}-asg"
+    })
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
+  }
 }
 
 resource "aws_lb_target_group" "app" {
@@ -130,6 +159,10 @@ resource "aws_lb_target_group" "app" {
     healthy_threshold   = 2
     unhealthy_threshold = 3
   }
+
+  tags = merge(local.common_tags, {
+    Name = "${var.environment}-${var.name}-tg"
+  })
 
 }
 

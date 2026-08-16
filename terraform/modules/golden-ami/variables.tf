@@ -42,3 +42,9 @@ variable "script_name" {
   description = "Filename of the provisioner script inside modules/golden-ami/scripts/."
   default     = "install.sh"
 }
+
+variable "tags" {
+  type        = map(string)
+  description = "Common tags applied to all resources"
+  default     = {}
+}
