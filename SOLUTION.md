@@ -1,5 +1,9 @@
 # SOLUTION.md — Rewards Dev Web Tier
 
+**Video walkthrough:** [https://www.loom.com/share/c0330b06c48140acbd1d7edf48985cc6](https://www.loom.com/share/c0330b06c48140acbd1d7edf48985cc6)
+
+---
+
 ## Architecture Overview
 
 A single-environment, multi-AZ web tier in **eu-central-1** serving the `rewards` service.
@@ -12,9 +16,7 @@ A single-environment, multi-AZ web tier in **eu-central-1** serving the `rewards
 
 **Instance access:** SSM Session Manager only — Ansible connects via `aws ssm start-session`, no SSH keys on instances.
 
-**Secrets:** Encrypted with **SOPS + AWS KMS** (one KMS key per environment). `.tfvars` and Ansible `group_vars` are committed as ciphertext; the `carlpett/sops` Terraform provider and `community.sops.load_vars` Ansible plugin decrypt at runtime using the CI role's KMS `Decrypt` permission. Decrypted values are passed through the module chain into the launch template user-data, which writes `/opt/app/.env` on first boot. No plaintext secrets in the repo, state, or CI variables.
-
-> **Current state:** The working implementation uses SSM Parameter Store `data` sources as a pragmatic stand-in. Migration to SOPS is the next step (see Known Issues).
+**Secrets:** Stored in **AWS SSM Parameter Store** as `SecureString` (KMS-encrypted at rest). Terraform reads them via `data "aws_ssm_parameter"` at apply time and passes values through the module chain into the launch template user-data, which writes `/opt/app/.env` on first boot. No plaintext secrets in the repo, state, or CI variables. Migration to SOPS-encrypted files in the repo is a planned improvement (see Known Issues).
 
 **CI/CD pipeline:**
 1. **PR opened** → `fmt`, `validate`, `tflint`, `terraform plan` result posted as PR comment.
@@ -43,7 +45,7 @@ graph TB
             end
         end
         subgraph OPS["Supporting Services"]
-            SOPS["🔑 SOPS + KMS\n.tfvars.enc · group_vars.enc\nper-env KMS key"]
+            SSM["🔑 SSM Parameter Store\n/dev/app/secret · /dev/app/virtual-host\n/dev/github/clone-token"]
             S3["🪣 S3 + DynamoDB\nTF State + Lock"]
             GHCR["📦 GHCR\nbranch-sha-HHmmss"]
             CW["📊 CloudWatch\nUnHealthyHostCount ≥ 1\nCPU ≥ 80%\nmem_used_percent"]
@@ -66,7 +68,7 @@ graph TB
     BUILD --> GHCR
     DEPLOY -->|OIDC| ASG
     DEPLOY -->|SSM session| NGINX
-    SOPS -->|KMS decrypt at apply| DEPLOY
+    SSM -->|GetParameter at apply| DEPLOY
     S3 -.->|state| DEPLOY
     PR -.->|plan only| S3
     CW --> SNS
@@ -85,7 +87,7 @@ graph TB
 | State         | S3 + DynamoDB lock                                                            | Simple, team-safe; Terraform Cloud adds UI/RBAC but extra SaaS |
 | Compute       | EC2 ASG + ALB, **public** subnets (no NAT)                                    | Terraform role lacked `ec2:CreateNatGateway`/`AllocateAddress`; move to private subnets in prod |
 | Access        | SSM Session Manager — no port 22                                              | No key rotation, full audit trail in CloudTrail                 |
-| Secrets       | SOPS + AWS KMS → `.tfvars.enc` / `group_vars.enc` → launch template → `/opt/app/.env` | Ciphertext in repo; KMS key per env; no SSM dependency  |
+| Secrets       | SSM Parameter Store `SecureString` → `data "aws_ssm_parameter"` → launch template → `/opt/app/.env` | KMS-encrypted at rest; no secrets in repo or state; migrate to SOPS for repo-native encryption (see Known Issues) |
 | Observability | CW alarms: `UnHealthyHostCount ≥ 1` + `CPUUtilization ≥ 80%` → SNS email    | Required path; add Prometheus/Grafana for prod                  |
 | Tags          | `merge(var.tags, { Environment })` on every resource                          | `Service=rewards, Owner=candidate, CostCenter=payments`         |
 | CI            | PR → fmt/validate/tflint/plan comment; merge → build+push; `workflow_run` deploy | Fully automated, no manual steps on merge                   |
@@ -149,13 +151,13 @@ Once green is confirmed healthy, delete the v1 entry from `golden_amis` and run 
 
 ## Known Issues & Fixes
 
-### 1. Migrate SSM → SOPS
-Current implementation uses `aws_ssm_parameter` data sources. To match the design intent, replace with SOPS-encrypted files:
+### 1. Migrate SSM Parameter Store → SOPS
+Current implementation uses `aws_ssm_parameter` data sources (pragmatic, works well for a single env). For repo-native secret management, migrate to SOPS-encrypted files:
 - Create one KMS key per environment; grant the CI OIDC role `kms:Decrypt`.
 - Encrypt `main.tfvars` in-place: `sops --encrypt --kms <key-arn> main.tfvars > main.tfvars.enc`.
 - Add `carlpett/sops` provider; replace `data "aws_ssm_parameter"` blocks with `data "sops_file"`.
 - Encrypt Ansible `group_vars/dev.yml`; use `community.sops.load_vars` in the playbook.
-- Delete the SSM parameters and remove the `aws:ssm:GetParameter` IAM permissions.
+- Delete the SSM parameters and remove the `ssm:GetParameter` IAM permissions.
 
 ### 2. Compose drift between deploys
 Anyone with SSM access can run `docker compose up -d` on the instance with a different image, or manually edit the compose file on disk. The Ansible playbook's `recreate: always` reconciles this on every deploy, and a pre-deploy drift check now logs a `DRIFT DETECTED` warning when the running image differs from the compose file — but drift is **invisible between deploy runs**.
