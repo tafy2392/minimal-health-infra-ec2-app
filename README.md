@@ -120,6 +120,24 @@ curl -H "X-App-Secret: mysecret" http://localhost:3000/
 
 ---
 
+## Verify Live Deployment
+
+```bash
+# Read the hostname from the compose file (the VIRTUAL_HOST default)
+HOST=$(grep -oP '(?<=\$\{APP_VIRTUAL_HOST:-)[^}]+' docker-compose-dev.yaml)
+
+# Public endpoint — no auth required (used by ALB health checks)
+curl -s "https://$HOST/healthz" | jq .
+# {"service":"rewards","status":"ok","commit":"main-db34c8b-224947","region":"eu-central-1"}
+
+# Secret-gated root endpoint — requires X-App-Secret header
+SECRET=$(aws ssm get-parameter --name /dev/app/secret --with-decryption --query Parameter.Value --output text)
+curl -s -H "X-App-Secret: $SECRET" "https://$HOST/" | jq .
+# {"service":"rewards","commit":"main-db34c8b-224947","region":"eu-central-1"}
+```
+
+---
+
 ## Running Ansible Locally
 
 ```bash

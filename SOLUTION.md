@@ -178,6 +178,27 @@ The `dev-terraform` GitHub Actions role has `AdministratorAccess`. **Fix:** repl
 ### 5. Python 3.13 breaks cloud-init
 Setting `python3` system alternative to 3.13 breaks AL2023 cloud-init (compiled for 3.9). **Fix:** install 3.13 as a parallel interpreter only — never run `alternatives --set python3`. Pin `ansible_python_interpreter: /usr/bin/python3.13` in `group_vars`.
 
+### 6. TODO — environment scaffolding script
+Promoting to a new environment (prod, int, staging) currently requires manually copying `terraform/health-dev-aws-eu/`, editing `backend.tfvars`, `main.tfvars`, and updating `docker-compose-dev.yaml` by hand — error-prone and easy to miss values.
+
+**Planned:** a Python CLI (`scripts/scaffold_env.py`) that prompts for or accepts CLI args for all environment-specific values and writes the full set of files:
+
+```
+scripts/scaffold_env.py --env prod --region eu-west-1 \
+  --cidr 10.20.0.0/24 \
+  --domain healthcheck-app.prod.example.com \
+  --alarm-email ops@example.com \
+  --github-repo myorg/myrepo
+```
+
+Outputs generated:
+- `terraform/health-{env}-aws-{region}/backend.tfvars` — bucket name, key, region, DynamoDB table
+- `terraform/health-{env}-aws-{region}/main.tfvars` — all variables including `golden_amis`, `github_oidc_roles`, tags
+- `docker-compose-{env}.yaml` — copied from dev template with env substitutions
+- `.github/workflows/` matrix entry hint printed to stdout
+
+The script should validate CIDR non-overlap against existing environments and fail fast if an environment directory already exists.
+
 ---
 
 ## Clean-up

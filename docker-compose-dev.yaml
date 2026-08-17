@@ -17,5 +17,5 @@ services:
       APP_SECRET: ${APP_SECRET}
       AWS_REGION: ${AWS_REGION:-eu-central-1}
       GIT_COMMIT: ${GIT_COMMIT:-unknown}
-      VIRTUAL_HOST: ${APP_VIRTUAL_HOST:-healthcheck-app.delivery-test.bmw.cloud}
+      VIRTUAL_HOST: ${APP_VIRTUAL_HOST:-healthcheck-app.delivery-tst.bmw.cloud}
       VIRTUAL_PORT: "3000"
